@@ -1,5 +1,4 @@
 import org.scalatest.FunSpec
-import org.scalatest.GivenWhenThen
 import org.scalatest.matchers.ShouldMatchers
 
 class SentenceSpec extends FunSpec with ShouldMatchers {

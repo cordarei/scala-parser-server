@@ -1,31 +1,17 @@
-
 import edu.stanford.nlp.ling.TaggedWord
 import edu.stanford.nlp.process.PTBEscapingProcessor
-import edu.stanford.nlp.trees.{PennTreebankLanguagePack, Tree}
+import edu.stanford.nlp.trees.Tree
 import edu.stanford.nlp.parser.lexparser.LexicalizedParser
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
-//import scala.util.{Either, Left, Right}
 
 
 case class Token(val token : String, val tag : Option[String], val offset : Int)
 
-// object TokenImplicits {
-//   implicit def tokenToStanfordTaggedWord(t : Token) =
-//     t match {
-//       case Token(token, Some(tag), _) => new TaggedWord(token, tag)
-//       case Token(token, None, _) => new TaggedWord(token)
-//     }
-// }
-// import TokenImplicits._
-
 
 object Sentence {
-  /** the result has three groups */
   private val taggedTokenPattern = """^(.*)(?<!\\)/([A-Z$\.:-]+)$|^(.*)$""".r
-  /** this pattern works by making the first ".+" reluctant */
-  // private val taggedTokenPattern = """^(.+?)(?:(?<!\\)/([A-Z:.$'`,#-]+))?$""".r
 
   def tokenize(sentence : String) : List[Token] = {
     // this implementation is being paranoid about double spaces:
@@ -40,8 +26,6 @@ object Sentence {
       be => be match { case (b, e) => (b, sentence.substring(b, e)) }
       ) map (
         os => os match { case (offset, s) => s match {
-        // case taggedTokenPattern(token, null) => Token(token, None, offset)
-        // case taggedTokenPattern(token, tag) => Token(token, Some(tag), offset)
         case taggedTokenPattern(null, null, token) => Token(token, None, offset)
         case taggedTokenPattern(token, tag, null) => Token(token, Some(tag), offset)
         } }
@@ -87,13 +71,21 @@ class Parser {
   }
 
   private def updateTokensFromParse(tokens : List[Token], parseTree : Tree) : List[Token] = {
-    tokens
+    val taggedWords = parseTree.taggedYield
+    (for (pair <- tokens.zip(taggedWords)) yield {
+      Token(pair._1.token, Some(pair._2.tag), pair._1.offset)
+    }) toList ;
   }
 
   private def getGRs(parseTree : Tree) : List[GrammaticalRelation] = {
     val gs = gsf.newGrammaticalStructure(parseTree)
-    // val deps = List(gs.typedDependenciesCCprocessed(true):_*)
-    val deps = List(gs.typedDependenciesCollapsed(true):_*)
-    deps.map(dep => GrammaticalRelation(dep.reln.getShortName(), dep.gov.index - 1, dep.dep.index - 1))
+    val deps = List(gs.typedDependenciesCCprocessed(true):_*)
+    def relnString(reln:edu.stanford.nlp.trees.GrammaticalRelation) : String = {
+      reln.getSpecific() match {
+        case null => reln.getShortName()
+        case s => reln.getShortName() + "_" + s
+      }
+    }
+    deps.map(dep => GrammaticalRelation(relnString(dep.reln), dep.gov.index - 1, dep.dep.index - 1))
   }
 }
