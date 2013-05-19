@@ -50,13 +50,11 @@ class ParserServer {
   def handleParseRequest(request : HttpRequest) : HttpResponse = {
     val query = new QueryString(request.uri)
     val sentence = query.string
-    println("handle parse request. sentence:"+sentence)
     val parseResult = parser.parse(sentence)
     val json = parseResult match {
       case Right(result) => ParseResultToJson(result)
       case Left(error) => throw new Exception("Parse error!")
     }
-    println("parsed sentence & formatted JSON")
 
     HttpResponse(headers=List(HttpHeader("Content-Type", "application/json")),
                  code=200,
