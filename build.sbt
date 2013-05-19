@@ -1,4 +1,4 @@
-name := "hello-world"
+name := "scala-parser-server"
 
 version := "0.1"
 
