@@ -22,7 +22,10 @@ case class Token(val token : String, val tag : Option[String], val offset : Int)
 
 
 object Sentence {
-  private val taggedTokenPattern = "^(.*)(?:/([A-Z:.$'`,#-]+))?$".r
+  /** the result has three groups */
+  private val taggedTokenPattern = """^(.*)(?<!\\)/([A-Z$\.:-]+)$|^(.*)$""".r
+  /** this pattern works by making the first ".+" reluctant */
+  // private val taggedTokenPattern = """^(.+?)(?:(?<!\\)/([A-Z:.$'`,#-]+))?$""".r
 
   def tokenize(sentence : String) : List[Token] = {
     // this implementation is being paranoid about double spaces:
@@ -37,8 +40,10 @@ object Sentence {
       be => be match { case (b, e) => (b, sentence.substring(b, e)) }
       ) map (
         os => os match { case (offset, s) => s match {
-        case taggedTokenPattern(token, null) => Token(token, None, offset)
-        case taggedTokenPattern(token, tag) => Token(token, Some(tag), offset)
+        // case taggedTokenPattern(token, null) => Token(token, None, offset)
+        // case taggedTokenPattern(token, tag) => Token(token, Some(tag), offset)
+        case taggedTokenPattern(null, null, token) => Token(token, None, offset)
+        case taggedTokenPattern(token, tag, null) => Token(token, Some(tag), offset)
         } }
       ) toList ; //semicolon to disambiguate to postfix operator usage (self-pedagogical note)
   }
@@ -87,7 +92,8 @@ class Parser {
 
   private def getGRs(parseTree : Tree) : List[GrammaticalRelation] = {
     val gs = gsf.newGrammaticalStructure(parseTree)
-    val deps = List(gs.typedDependenciesCCprocessed(true):_*)
+    // val deps = List(gs.typedDependenciesCCprocessed(true):_*)
+    val deps = List(gs.typedDependenciesCollapsed(true):_*)
     deps.map(dep => GrammaticalRelation(dep.reln.getShortName(), dep.gov.index - 1, dep.dep.index - 1))
   }
 }
