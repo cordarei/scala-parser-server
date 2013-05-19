@@ -32,8 +32,9 @@ object ParseResultToJson {
 
     val tokens = JSONArray(tokenStrings)
     val pos = JSONArray(tagStrings)
-    val rels = parseResult.rels.map(gr => 
-        JSONArray(List(gr.relation, gr.headTokenIndex, gr.depTokenIndex)))
+    val rels = JSONArray(
+      parseResult.rels.map(gr => 
+        JSONArray(List(gr.relation, gr.headTokenIndex, gr.depTokenIndex))))
     val obj = JSONObject(Map("tokens" -> tokens, "pos" -> pos, "rels" -> rels))
 
     return obj.toString
