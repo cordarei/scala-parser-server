@@ -35,6 +35,11 @@ case class HttpResponse(val headers : List[HttpHeader],
                         val mimeType : String = "",
                         val body : String = "")
 
+case class InternalServerError(val statusCode : Int = 500,
+                               val message : String = "",
+                               val responseBody : String = "") extends Exception {
+}
+
 
 abstract class RequestHandler {
   def apply(request : HttpRequest, response : Option[HttpResponse]) : Option[HttpResponse]
@@ -88,7 +93,10 @@ class RoutingRequestHandler extends RequestHandler {
 
   def get(path : String)(action : (HttpRequest) => HttpResponse) = routeMaps += path -> action
 
-  def internalErrorResponse() = HttpResponse(List[HttpHeader](), 500, "Server encountered an internal error.")
+  def internalErrorResponse(ex : InternalServerError) = HttpResponse(
+    List[HttpHeader](),
+    ex.statusCode,
+    ex.responseBody)
 
   def apply(request : HttpRequest, response : Option[HttpResponse]) : Option[HttpResponse] = {
     val path = request.uri.getPath
@@ -96,8 +104,9 @@ class RoutingRequestHandler extends RequestHandler {
       case Some(action) => try {
         Some(action(request))
       } catch {
-        case ex : Exception => {
-          Some(internalErrorResponse)
+        case ex : InternalServerError => {
+          println(ex.message)
+          Some(internalErrorResponse(ex))
         }
       }
       case None => None

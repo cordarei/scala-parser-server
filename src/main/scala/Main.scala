@@ -47,6 +47,14 @@ class ParserServer {
   val parser = new Parser
   val server = createServer
 
+  private def parserErrorResponse(err : ParserError) : String = {
+    val errCat = err match {
+      case NoMemory => "memory"
+      case Skipped => "skipped"
+      case Unparsable => "unparseable" }
+
+    "{error: \"" + errCat + "\"}"
+  }
 
   def handleParseRequest(request : HttpRequest) : HttpResponse = {
     val query = new QueryString(request.uri)
@@ -54,7 +62,10 @@ class ParserServer {
     val parseResult = parser.parse(sentence)
     val json = parseResult match {
       case Right(result) => ParseResultToJson(result)
-      case Left(error) => throw new Exception("Parse error!")
+      case Left(error) => throw new InternalServerError(
+        message="The parser returned error:" + error.toString,
+        responseBody=parserErrorResponse(error)
+      )
     }
 
     HttpResponse(headers=List(HttpHeader("Content-Type", "application/json")),
