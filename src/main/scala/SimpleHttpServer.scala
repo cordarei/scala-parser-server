@@ -8,6 +8,7 @@
 
 import java.io.{InputStreamReader, BufferedReader}
 import java.net.InetSocketAddress
+import java.util.concurrent.Executors
 import com.sun.net.httpserver.{HttpExchange, HttpHandler, HttpServer}
 
 import scala.collection.JavaConversions._
@@ -145,6 +146,9 @@ class SimpleHttpHandler(val handleRequests : RequestHandler) extends HttpHandler
 class SimpleHttpServer(val address : InetSocketAddress, val handler : HttpHandler) {
   private val server = HttpServer.create(address, 0)
   server.createContext("/", handler)
+
+  private val threadPool = Executors.newFixedThreadPool(10)
+  server.setExecutor(threadPool)
 
   /** the real address the server is listening on; allows using port 0 in address */
   val listenAddress = server.getAddress()
