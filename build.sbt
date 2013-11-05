@@ -13,6 +13,7 @@ scalaVersion := "2.10.1"
 
 libraryDependencies ++= Seq(
   "edu.stanford.nlp" % "stanford-parser" % "2.0.5",
+  "edu.stanford.nlp" % "stanford-parser" % "2.0.5" classifier "models",
   "org.scalatest" %% "scalatest" % "1.9.1" % "test"
 )
 
